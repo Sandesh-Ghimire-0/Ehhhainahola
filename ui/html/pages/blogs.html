@@ -1,0 +1,9 @@
+{{define "content"}}
+<div class="blog-grid">
+    {{range .Posts}}
+        <br>
+        <a href = "/post/{{.Slug}}" class="main-stuff-topic pixelify-bold" style="color:chartreuse">{{.Title}}</a>
+        <p class="stuff-body pixelify-text">{{.Content}}</p>
+    {{end}}
+</div>
+{{end}}

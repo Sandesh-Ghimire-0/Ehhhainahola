@@ -1,0 +1,95 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WaduhekISDIS</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+  
+  <style>
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+    <div class="webname">
+      <img class="waduhek-gif" src="/static/img/waduhek_handwritten.gif" alt="waduhek">
+      <div class="test-img">
+        <a href="https://youtube.com">
+          <img src="/static/img/cyberpunk.webp" class="floating" alt="cyberpunk" >
+        </a>
+      </div>
+    </div>
+    <div class="webbody">
+      <div class="stuff_and_cici">
+        <div class = "stuff">
+            <h2 class="titles pixel-font-headline">My stuff</h2>
+            <div class="inside-my-stuff">
+              <a href="#HOME" class="links pixelify-bold">Home</a>
+              <a href="#stats-box"class="links pixelify-bold">Stats</a>
+              <a href="#INSPIRATION" class="links pixelify-bold">Inspiration & Tour</a>
+              <a href="#ABOUT" class="links pixelify-bold">About Me</a>
+              <a href="#UPDATES" class="links pixelify-bold">Updates</a>
+              <a href="#NEKO-PUNCH" class="links pixelify-bold">neko-punch</a>
+            </div>
+            <h2 class="titles pixel-font-headline">Off site</h2>
+            <div class="inside-my-stuff">
+              <a href="/meme" class="links pixelify-bold">Random Meme</a>
+              <a href="http://fmhy.net"class="links pixelify-bold">Offsite-2</a>
+            </div>
+        </div>
+        <div class="thumbs-up">
+          <img src="/static/img/mlbb-cici.gif" class="cici-thumbs-up" alt="pani-poni">
+        </div>
+      </div>
+
+      <div class="main-thing">
+        {{template "content" .}}
+        <footer id="COPYRIGHT" class="pixel-font-headline">
+          No copyright, you can steal anything from here.
+        </footer>
+      </div>
+      <div class="community">
+        <div class="me-class">
+          <img class = "me-open" src="/static/img/open.webp" alt="open">
+        </div>
+        <div class="for-you-section">
+          <p class="titles pixelify-bold">For You</p>
+          <a class="links pixelify-text construction-target" href="">Draw it</a>          
+          <span class="links comment-reminder pixelify-text">say something below</span>
+          <a class="links pixelify-text" href="/blogs/">Blogs</a>
+          <span class="notice pixelify-text">Other content will be added later.
+          </span>
+        </div>
+        <div class="comment-form-area">
+          <div id="COMMENT-AREA">
+            {{ range .Comments}}
+              <p class = "pixelify-text indiv-comment"><strong id = "USR" >{{ .Author }}</strong>: {{ .Content }}</p>
+              <span class="pixelify-text">---------------------------------------------------</span>
+            {{ end }}
+          </div> 
+          <div id="INTERACTION">
+            <form class="form-box" method="POST" action="/comment">
+              <input type="hidden" name="post_no" value="{{.Post_id}}" />
+              <input class="Username-box" type="text" name="author" placeholder="Your name" required>
+              <div class="comment-row">
+                <textarea class="Comment-text-box" name="content" placeholder="Write a comment..." required></textarea>
+                <button type="submit">Submit</button>
+              </div>
+            </form>
+          </div>
+        </div>
+    </div>
+    <script src="/static/js/stars.js"></script>
+</body>
+</html>
+{{end}}
