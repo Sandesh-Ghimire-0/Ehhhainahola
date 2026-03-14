@@ -4,9 +4,9 @@
     <br>
     <div class="body-text-container">
       <div class="main-stuff-topic pixelify-bold" style="color:chartreuse">{{(index .Posts 0).Title}}</div>
-      <p class="stuff-body pixelify-text">
-        {{(index .Posts 0).Content}}
-      </p>
+        <div class="stuff-body pixelify-text"> 
+            {{.HTMLContent}}
+        </div>
     </div>
 </div>
 {{end}}

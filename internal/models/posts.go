@@ -14,6 +14,7 @@ import(
 	_ "github.com/lib/pq"
 	"time"
 	"os"
+	"html/template"
 )
 
 type Post struct {
@@ -38,6 +39,7 @@ type Post_Comment struct{
 	Posts		[]Post
 	Comments 	[]Comment
 	Post_id 		int
+	HTMLContent template.HTML
 }
 
 func Connectdb() (*sql.DB, error){

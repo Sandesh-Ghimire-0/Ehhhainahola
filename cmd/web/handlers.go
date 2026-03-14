@@ -5,9 +5,16 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"waduhek/internal/models"
+	"bytes"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/renderer/html"
+	"github.com/yuin/goldmark/parser"
 )
+
 
 func (app *Application) serverError(w http.ResponseWriter, r *http.Request, err error) {
     var (
@@ -150,6 +157,27 @@ func (app *Application) indiv_blog_Handler(w http.ResponseWriter, r *http.Reques
 		http.Error(w, `{"error": "database error"}`, http.StatusInternalServerError)
 		return
 	}
+
+	// logic for converting md to html
+
+	md := goldmark.New(
+          goldmark.WithExtensions(extension.GFM),
+          goldmark.WithParserOptions(
+              parser.WithAutoHeadingID(),
+          ),
+          goldmark.WithRendererOptions(
+              html.WithHardWraps(),
+              html.WithXHTML(),
+          ),
+      )
+	var buf bytes.Buffer
+	if err := md.Convert([]byte(p.Content), &buf); err != nil {
+		panic(err)
+	}
+
+	htmlTemplate := buf.String()
+
+
 	//logic for post comments
 	var comments []models.Comment
 	var c models.Comment
@@ -171,6 +199,7 @@ func (app *Application) indiv_blog_Handler(w http.ResponseWriter, r *http.Reques
 		Posts: []models.Post{p},
 		Comments: comments,
 		Post_id: p.ID,
+		HTMLContent: template.HTML(htmlTemplate),
 	}
 	files := []string{
 		"./ui/html/base.html",
@@ -205,15 +234,15 @@ func (app *Application) createComment(w http.ResponseWriter, r *http.Request) {
 
 	author := r.FormValue("author")
 	content := r.FormValue("content")
-
-	if (author == "" || content == "") {
+	post_id, err := strconv.Atoi(r.FormValue("post_no"))
+	if (author == "" || content == "" ){
 		http.Error(w, "All fields required", http.StatusBadRequest)
 		return
 	}
 
 	_, err = db.Exec(
-		`INSERT INTO comments (author, content) VALUES ($1, $2)`,
-		author, content,
+		`INSERT INTO comments (post_id,author, content) VALUES ($1, $2, $3)`,
+		post_id, author, content, 
 	)
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)

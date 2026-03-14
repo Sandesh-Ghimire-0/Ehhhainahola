@@ -305,6 +305,15 @@ p.stuff-body{
     padding: 10px;
 }
 
+div.stuff-body{
+    overflow-x: hidden;
+    border: 2px solid grey;
+    border-radius: 10px;
+    background-color: black;
+    color:#AEC6CF;
+    padding: 10px;
+}
+
 #HOME p.stuff-body{
     height:150px;
 }
