@@ -15,24 +15,34 @@ import (
 	"github.com/yuin/goldmark/parser"
 )
 
+func GetCookie(r *http.Request) *http.Cookie {
+	cookie, err := r.Cookie("username")
+	if err != nil {
+    	return nil
+	} else {
+    	return cookie
+	}
+}
 
 func (app *Application) serverError(w http.ResponseWriter, r *http.Request, err error) {
     var (
         method = r.Method
         uri    = r.URL.RequestURI()
     )
-    app.logger.Error(err.Error(), "method", method, "uri", uri)
+    app.logger.Error(err.Error(), "method", method, "uri: ", uri)
     http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
 func (app *Application) home(w http.ResponseWriter, r *http.Request) {
+	cookie := GetCookie(r)
+
 	db := app.DB
 	files := []string{
 		"./ui/html/base.html",
 		"./ui/html/pages/home.html",
 	}
 
-	rows, err := db.Query(`SELECT id, author, content FROM comments WHERE post_id IS NULL`)
+	rows, err := db.Query(`SELECT id, author, content FROM comments WHERE post_id IS NULL OR post_id = 0`)
 	if err != nil {
     	log.Fatal(err)
 	}
@@ -56,9 +66,10 @@ func (app *Application) home(w http.ResponseWriter, r *http.Request) {
 		Posts		: nil,
 		Comments	: comments,
 		Post_id		: 0,	
+		Cookie 		: cookie,
 	}
 	if err != nil {
-		app.logger.Error(err.Error(), "method", r.Method, "uri", r.URL.RequestURI())
+		app.logger.Error(err.Error(), "method", r.Method, "uri: ", r.URL.RequestURI())
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}	
@@ -71,7 +82,7 @@ func (app *Application) home(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) blog(w http.ResponseWriter, r *http.Request) {
-
+	cookie := GetCookie(r)
 	// we opted for buffer method to solve the "superfluous response" error
 	w.Header().Add("Server", "Go")
 
@@ -83,7 +94,7 @@ func (app *Application) blog(w http.ResponseWriter, r *http.Request) {
 	}
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		app.logger.Error(err.Error(), "method", r.Method, "uri", r.URL.RequestURI())
+		app.logger.Error(err.Error(), "method", r.Method, "uri: ", r.URL.RequestURI())
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	return
 	}
@@ -105,7 +116,7 @@ func (app *Application) blog(w http.ResponseWriter, r *http.Request) {
 
 	var comments []models.Comment
 	var c models.Comment
-	rows, err = db.Query(`SELECT id, author, content FROM comments WHERE post_id IS NULL`)
+	rows, err = db.Query(`SELECT id, author, content FROM comments WHERE post_id IS NULL OR post_id = 0`)
 	if err := rows.Err(); err != nil {
     	http.Error(w, "something went wrong", http.StatusInternalServerError)
     	return
@@ -122,6 +133,7 @@ func (app *Application) blog(w http.ResponseWriter, r *http.Request) {
 		Posts		: posts,
 		Comments	: comments,
 		Post_id		: 0,	
+		Cookie		: cookie,	
 	}
 	err = ts.ExecuteTemplate(w, "base", pnc) 
 	
@@ -133,6 +145,8 @@ func (app *Application) blog(w http.ResponseWriter, r *http.Request) {
 
 func (app *Application) indiv_blog_Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Server", "Go")
+
+	cookie := GetCookie(r)
 	db := app.DB
 	// Extract the ID from the URL e.g. /post/3 -> "3"
 	slug_Str := strings.TrimPrefix(r.URL.Path, "/post/")
@@ -196,10 +210,11 @@ func (app *Application) indiv_blog_Handler(w http.ResponseWriter, r *http.Reques
 	}
 
 	pnc := models.Post_Comment{
-		Posts: []models.Post{p},
-		Comments: comments,
-		Post_id: p.ID,
-		HTMLContent: template.HTML(htmlTemplate),
+		Posts			: []models.Post{p},
+		Comments		: comments,
+		Post_id			: p.ID,
+		HTMLContent		: template.HTML(htmlTemplate),
+		Cookie			: cookie,
 	}
 	files := []string{
 		"./ui/html/base.html",
@@ -207,13 +222,13 @@ func (app *Application) indiv_blog_Handler(w http.ResponseWriter, r *http.Reques
 	}
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		app.logger.Error(err.Error(), "method", r.Method, "uri", r.URL.RequestURI())
+		app.logger.Error(err.Error(), "method: ", r.Method, "uri: ", r.URL.RequestURI())
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	return
 	}
 	err = ts.ExecuteTemplate(w, "base", pnc) 
 	if err != nil {
-    	app.logger.Error(err.Error(), "method", r.Method, "uri", r.URL.RequestURI())
+    	app.logger.Error(err.Error(), "method: ", r.Method, "uri: ", r.URL.RequestURI())
     	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
     	return
 	}
@@ -235,6 +250,16 @@ func (app *Application) createComment(w http.ResponseWriter, r *http.Request) {
 	author := r.FormValue("author")
 	content := r.FormValue("content")
 	post_id, err := strconv.Atoi(r.FormValue("post_no"))
+
+	http.SetCookie(w, &http.Cookie{
+    Name:     "username",
+    Value:    author,
+    Path:     "/",
+    MaxAge:   7 * 24 * 3600, // 1 week
+    HttpOnly: true,
+    SameSite: http.SameSiteLaxMode,  // prevent cross site request forgery.(CSRF)
+	})
+
 	if (author == "" || content == "" ){
 		http.Error(w, "All fields required", http.StatusBadRequest)
 		return
@@ -245,9 +270,10 @@ func (app *Application) createComment(w http.ResponseWriter, r *http.Request) {
 		post_id, author, content, 
 	)
 	if err != nil {
+		app.logger.Error(err.Error(), "method: ", r.Method, "uri: ", r.URL.RequestURI())
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
-
+	log.Println("path:", r.URL.Path)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

@@ -1,20 +1,22 @@
 // for database realated things
 
-// sudo -u postgres psql 
+// sudo -u postgres psql
 // psql -U newusername -d dbname  -> conn spec db as that user
 // psql -U blogadmin -d blogdb -h localhost
 
 package models
 
-import(
-	"fmt"
-	"log"
+import (
 	"database/sql"
+	"fmt"
+	"html/template"
+	"log"
+	"net/http"
+	"os"
+	"time"
+
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	"time"
-	"os"
-	"html/template"
 )
 
 type Post struct {
@@ -36,10 +38,11 @@ type Comment struct {
 
 
 type Post_Comment struct{
-	Posts		[]Post
-	Comments 	[]Comment
-	Post_id 		int
-	HTMLContent template.HTML
+	Posts				[]Post
+	Comments 			[]Comment
+	Post_id 			int
+	HTMLContent 		template.HTML
+	Cookie 				*http.Cookie
 }
 
 func Connectdb() (*sql.DB, error){
