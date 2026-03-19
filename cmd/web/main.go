@@ -27,6 +27,7 @@ func main(){
 	logger.Info("starting server on","addr", *addr)
 	defer db.Close()
 	err = http.ListenAndServe(*addr, app.Routes())
+	
 	logger.Error(err.Error())
 	os.Exit(1)
 }

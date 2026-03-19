@@ -15,15 +15,6 @@ import (
 	"github.com/yuin/goldmark/parser"
 )
 
-func GetCookie(r *http.Request) *http.Cookie {
-	cookie, err := r.Cookie("username")
-	if err != nil {
-    	return nil
-	} else {
-    	return cookie
-	}
-}
-
 func (app *Application) serverError(w http.ResponseWriter, r *http.Request, err error) {
     var (
         method = r.Method
@@ -173,7 +164,6 @@ func (app *Application) indiv_blog_Handler(w http.ResponseWriter, r *http.Reques
 	}
 
 	// logic for converting md to html
-
 	md := goldmark.New(
           goldmark.WithExtensions(extension.GFM),
           goldmark.WithParserOptions(
@@ -190,7 +180,6 @@ func (app *Application) indiv_blog_Handler(w http.ResponseWriter, r *http.Reques
 	}
 
 	htmlTemplate := buf.String()
-
 
 	//logic for post comments
 	var comments []models.Comment
